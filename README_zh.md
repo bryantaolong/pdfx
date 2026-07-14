@@ -11,6 +11,7 @@
 - **merge**：将目录中的所有 PDF 文件合并为一个文件
 - **split**：在指定页码处将 PDF 拆分为两个文件
 - **extract**：提取 PDF 的指定页面并合并为一个新文件
+- **version**：查看当前版本号
 
 ## 构建
 
@@ -30,6 +31,12 @@ go build -o pdfx.exe .
 
 # 提取指定页面
 ./pdfx.exe extract -n 输入文件 -p 1,2,3
+
+# 查看版本
+./pdfx.exe version
+
+# 也可以通过 -v 查看版本
+./pdfx.exe -v
 ```
 
 ## 命令详解
@@ -108,6 +115,37 @@ go build -o pdfx.exe .
 
 # 指定输出文件名
 ./pdfx.exe extract -n 文档.pdf -p 1,2,3 -o 摘要.pdf
+```
+
+### version
+
+查看当前版本号。
+
+```bash
+./pdfx.exe version
+```
+
+也可以使用 `-v`  shorthand：
+
+```bash
+./pdfx.exe -v
+```
+
+## 项目结构
+
+```
+pdfx/
+├─ cmd/           # Cobra 命令模块
+│  ├─ root.go     # 根命令与全局 flag
+│  ├─ version.go  # version 子命令
+│  └─ commands/   # 功能子目录
+│     ├─ util.go
+│     ├─ merge.go
+│     ├─ split.go
+│     └─ extract.go
+├─ logo/          # Logo 资源
+├─ main.go
+└─ README.md
 ```
 
 ## 注意事项

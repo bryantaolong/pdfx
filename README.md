@@ -4,7 +4,7 @@
   </a>
 </div>
 
-**pdfx** is a CLI tool for merging, splitting, and extracting PDF pages.
+**PDFX** empowers you to merge, split and extract PDF files direct in your terminal.
 
 ---
 
@@ -61,6 +61,7 @@ pdfx --help
 pdfx merge --help
 pdfx split --help
 pdfx extract --help
+pdfx version --help
 ```
 
 ### Merge PDFs
@@ -118,11 +119,13 @@ pdfx extract -n book.pdf -p 1,2,3 -o chapters.pdf
 pdfx/
 ├─ cmd/           # Cobra command modules
 │  ├─ root.go
-│  ├─ merge.go
-│  ├─ split.go
-│  └─ extract.go
+│  ├─ version.go
+│  └─ commands/
+│     ├─ util.go
+│     ├─ merge.go
+│     ├─ split.go
+│     └─ extract.go
 ├─ logo/          # Logo assets and icon workflow
-│  └─ workflow/   # Icon embedding scripts
 ├─ main.go
 └─ README.md
 ```
