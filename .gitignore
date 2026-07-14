@@ -1,6 +1,10 @@
 # Custom
 .agents/
 *.pdf
+pdfx
+
+# Generated icon
+logo/pdfx.ico
 
 # Binaries
 *.exe
@@ -8,6 +12,7 @@
 *.dll
 *.so
 *.dylib
+*.syso
 
 # Test binary
 *.test

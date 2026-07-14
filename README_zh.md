@@ -1,6 +1,10 @@
-# pdfx
+<div align="center">
+  <a href="https://github.com/bryantaolong/pdfx">
+    <img width="200" height="200" src="logo/pdfx.jpg" alt="pdfx logo"/>
+  </a>
+</div>
 
-一个类似 Git 风格的 PDF 命令行工具，用于合并、拆分和提取 PDF 页面。
+一个 PDF 命令行工具，用于合并、拆分和提取 PDF 页面。
 
 ## 功能
 
