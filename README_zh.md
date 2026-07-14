@@ -143,6 +143,7 @@ pdfx/
 │     ├─ merge.go
 │     ├─ split.go
 │     └─ extract.go
+├─ test/          # 模块测试
 ├─ logo/          # Logo 资源
 ├─ main.go
 └─ README.md

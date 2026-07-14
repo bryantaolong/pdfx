@@ -13,6 +13,7 @@
 * Merge all PDF files in a directory into one file
 * Split a PDF into two files at a specified page number
 * Extract specified pages from a PDF and merge them into a new file
+* Check version via `pdfx version` or `pdfx -v`
 * Color-coded output for easy operation feedback
 
 ---
@@ -109,6 +110,9 @@ pdfx split -n book.pdf -f 15
 
 # Extract pages 1, 2, and 3
 pdfx extract -n book.pdf -p 1,2,3 -o chapters.pdf
+
+# Check version
+pdfx -v
 ```
 
 ---
@@ -125,6 +129,7 @@ pdfx/
 │     ├─ merge.go
 │     ├─ split.go
 │     └─ extract.go
+├─ test/          # Integration tests
 ├─ logo/          # Logo assets and icon workflow
 ├─ main.go
 └─ README.md
