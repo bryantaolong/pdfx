@@ -182,3 +182,12 @@ func TestExtractOutOfRangePage(t *testing.T) {
 		t.Fatal("expected error for out-of-range page")
 	}
 }
+
+func TestExtractDuplicatePages(t *testing.T) {
+	if err := runCLI("extract", "-n", "test_file.pdf", "-p", "1,1,2,2", "-o", "dup.pdf"); err != nil {
+		t.Fatalf("extract with duplicate pages failed: %v", err)
+	}
+	if _, err := os.Stat("dup.pdf"); os.IsNotExist(err) {
+		t.Fatal("dup.pdf was not created")
+	}
+}

@@ -75,9 +75,13 @@ func NewCmdExtract() *cobra.Command {
 			fmt.Printf("Extracting pages to: %s\n", extractOutput)
 
 			pageNrs := make([]int, 0, len(pages))
+			seen := make(map[int]struct{})
 			for _, p := range pages {
 				n, _ := strconv.Atoi(p)
-				pageNrs = append(pageNrs, n)
+				if _, ok := seen[n]; !ok {
+					seen[n] = struct{}{}
+					pageNrs = append(pageNrs, n)
+				}
 			}
 
 			ctx, err := api.ReadContextFile(extractName)
