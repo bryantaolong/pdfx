@@ -2,11 +2,15 @@ package test
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/bryantaolong/pdfx/cmd"
 )
+
+var projectRoot string
 
 func TestMain(m *testing.M) {
 	// Determine source PDFs directory before changing working directory
@@ -15,7 +19,8 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	srcDir := filepath.Join(cwd, "..", "pdfs")
+	projectRoot = filepath.Join(cwd, "..")
+	srcDir := filepath.Join(projectRoot, "pdfs")
 
 	// Create a temp working directory for each test run
 	dir, err := os.MkdirTemp("", "pdfx-test")
@@ -56,8 +61,6 @@ func TestVersion(t *testing.T) {
 		args []string
 	}{
 		{"subcommand", []string{"version"}},
-		{"flag", []string{"-v"}},
-		{"long flag", []string{"--version"}},
 	}
 
 	for _, tt := range tests {
@@ -66,6 +69,27 @@ func TestVersion(t *testing.T) {
 			os.Args = append([]string{"pdfx"}, tt.args...)
 			if err := runCLI(); err != nil {
 				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+func TestVersionFlag(t *testing.T) {
+	if projectRoot == "" {
+		t.Skip("project root not set")
+	}
+
+	for _, args := range [][]string{{"-v"}, {"--version"}} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			cmd := exec.Command("go", "run", filepath.Join(projectRoot, "main.go"))
+			cmd.Args = append(cmd.Args, args...)
+			cmd.Dir = projectRoot
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				t.Fatalf("command failed: %v\n%s", err, out)
+			}
+			if !strings.Contains(string(out), "v0.1.1") {
+				t.Fatalf("expected version output, got: %s", out)
 			}
 		})
 	}

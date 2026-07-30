@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/bryantaolong/pdfx/cmd/commands"
 	"github.com/spf13/cobra"
@@ -23,6 +24,7 @@ func init() {
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		if showVersion {
 			fmt.Println(GetVersion())
+			os.Exit(0)
 		}
 		return nil
 	}
