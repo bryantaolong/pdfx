@@ -28,6 +28,14 @@ func NewCmdSplit() *cobra.Command {
 				return fmt.Errorf("--from must be >= 1, got %d", splitFrom)
 			}
 
+			totalPages, err := api.PageCountFile(splitName)
+			if err != nil {
+				return fmt.Errorf("failed to read PDF page count: %w", err)
+			}
+			if splitFrom > totalPages {
+				return fmt.Errorf("--from must be <= total pages (%d), got %d", totalPages, splitFrom)
+			}
+
 			dir := filepath.Dir(splitName)
 			stem := filepath.Base(splitName[:len(splitName)-len(filepath.Ext(splitName))])
 

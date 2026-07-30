@@ -48,7 +48,7 @@ func NewCmdMerge() *cobra.Command {
 
 			// Check if output file already exists
 			if _, err := os.Stat(mergeOutput); !os.IsNotExist(err) {
-				return fmt.Errorf("output file '%s' already exists, use -f to overwrite", mergeOutput)
+				return fmt.Errorf("output file '%s' already exists", mergeOutput)
 			}
 
 			// Check if output conflicts with any input file

@@ -146,6 +146,14 @@ func TestSplitMissingFile(t *testing.T) {
 	}
 }
 
+func TestSplitOutOfRangePage(t *testing.T) {
+	// test_file.pdf has 2 pages; page 3 is out of range
+	err := runCLI("split", "-n", "test_file.pdf", "-f", "3")
+	if err == nil {
+		t.Fatal("expected error for out-of-range page")
+	}
+}
+
 func TestSplitInvalidPage(t *testing.T) {
 	for _, from := range []int{0, -1} {
 		t.Run(fmt.Sprintf("from=%d", from), func(t *testing.T) {
