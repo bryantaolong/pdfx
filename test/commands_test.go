@@ -94,7 +94,7 @@ func TestVersionFlag(t *testing.T) {
 			if err != nil {
 				t.Fatalf("command failed: %v\n%s", err, out)
 			}
-			if !strings.Contains(string(out), "v0.1.1") {
+			if !strings.Contains(string(out), "v0.1.2") {
 				t.Fatalf("expected version output, got: %s", out)
 			}
 		})

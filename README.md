@@ -4,7 +4,7 @@
   </a>
 </div>
 
-**PDFX** empowers you to merge, split and extract PDF files direct in your terminal.
+**PDFX** empowers you to merge, split and extract PDF files right in your terminal.
 
 ---
 
