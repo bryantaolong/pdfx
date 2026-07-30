@@ -48,7 +48,11 @@ func NewCmdSplit() *cobra.Command {
 			fmt.Printf("  Output directory: %s\n", dir)
 
 			// List generated files
-			matches, _ := filepath.Glob(filepath.Join(dir, stem+"_*.pdf"))
+			pattern := filepath.Join(dir, stem+"_*.pdf")
+			matches, err := filepath.Glob(pattern)
+			if err != nil {
+				return fmt.Errorf("failed to list generated files: %w", err)
+			}
 			if len(matches) > 0 {
 				sort.Strings(matches)
 				fmt.Println("  Generated files:")

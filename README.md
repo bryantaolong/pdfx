@@ -87,7 +87,7 @@ pdfx split --name input.pdf --from 10
 
 This splits `input.pdf` into:
 * `input_1-9.pdf` (pages 1-9)
-* `input_10-end.pdf` (pages 10 to end)
+* `input_10-56.pdf` (pages 10 to end, actual end page depends on input)
 
 ### Extract PDF
 
