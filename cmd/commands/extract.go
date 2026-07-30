@@ -38,8 +38,12 @@ func NewCmdExtract() *cobra.Command {
 				if p == "" {
 					continue
 				}
-				if _, err := strconv.Atoi(p); err != nil {
+				n, err := strconv.Atoi(p)
+				if err != nil {
 					return fmt.Errorf("invalid page number: %s", p)
+				}
+				if n < 1 {
+					return fmt.Errorf("invalid page number: %s (must be >= 1)", p)
 				}
 				pages = append(pages, p)
 			}
@@ -53,6 +57,18 @@ func NewCmdExtract() *cobra.Command {
 			if outDir != "." && outDir != "" {
 				if err := os.MkdirAll(outDir, 0755); err != nil {
 					return fmt.Errorf("failed to create output directory: %w", err)
+				}
+			}
+
+			// Validate page range
+			totalPages, err := api.PageCountFile(extractName)
+			if err != nil {
+				return fmt.Errorf("failed to read PDF page count: %w", err)
+			}
+			for _, p := range pages {
+				n, _ := strconv.Atoi(p)
+				if n > totalPages {
+					return fmt.Errorf("page number %d exceeds total pages (%d)", n, totalPages)
 				}
 			}
 

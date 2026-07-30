@@ -1,9 +1,11 @@
 package test
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -27,9 +29,9 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	defer os.RemoveAll(dir)
 
 	if err := os.Chdir(dir); err != nil {
+		os.RemoveAll(dir)
 		panic(err)
 	}
 
@@ -39,15 +41,19 @@ func TestMain(m *testing.M) {
 		dst := filepath.Join(dir, name)
 		data, err := os.ReadFile(src)
 		if err != nil {
+			os.RemoveAll(dir)
 			panic(err)
 		}
 		if err := os.WriteFile(dst, data, 0644); err != nil {
+			os.RemoveAll(dir)
 			panic(err)
 		}
 	}
 
 	// Run tests from the temp directory
-	os.Exit(m.Run())
+	code := m.Run()
+	os.RemoveAll(dir)
+	os.Exit(code)
 }
 
 func runCLI(args ...string) error {
@@ -140,6 +146,17 @@ func TestSplitMissingFile(t *testing.T) {
 	}
 }
 
+func TestSplitInvalidPage(t *testing.T) {
+	for _, from := range []int{0, -1} {
+		t.Run(fmt.Sprintf("from=%d", from), func(t *testing.T) {
+			err := runCLI("split", "-n", "test_file.pdf", "-f", strconv.Itoa(from))
+			if err == nil {
+				t.Fatal("expected error for invalid page number")
+			}
+		})
+	}
+}
+
 func TestExtractMissingFile(t *testing.T) {
 	err := runCLI("extract", "-n", "nonexistent.pdf", "-p", "1")
 	if err == nil {
@@ -148,8 +165,20 @@ func TestExtractMissingFile(t *testing.T) {
 }
 
 func TestExtractInvalidPage(t *testing.T) {
-	err := runCLI("extract", "-n", "test_file.pdf", "-p", "abc")
+	for _, p := range []string{"abc", "0", "-1"} {
+		t.Run(p, func(t *testing.T) {
+			err := runCLI("extract", "-n", "test_file.pdf", "-p", p)
+			if err == nil {
+				t.Fatal("expected error for invalid page")
+			}
+		})
+	}
+}
+
+func TestExtractOutOfRangePage(t *testing.T) {
+	// test_file.pdf has 2 pages; page 3 is out of range
+	err := runCLI("extract", "-n", "test_file.pdf", "-p", "3")
 	if err == nil {
-		t.Fatal("expected error for invalid page")
+		t.Fatal("expected error for out-of-range page")
 	}
 }

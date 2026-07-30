@@ -46,6 +46,20 @@ func NewCmdMerge() *cobra.Command {
 			}
 			mergeOutput = EnsurePDFExt(mergeOutput)
 
+			// Check if output file already exists
+			if _, err := os.Stat(mergeOutput); !os.IsNotExist(err) {
+				return fmt.Errorf("output file '%s' already exists, use -f to overwrite", mergeOutput)
+			}
+
+			// Check if output conflicts with any input file
+			absOutput, _ := filepath.Abs(mergeOutput)
+			for _, m := range matches {
+				absInput, _ := filepath.Abs(m)
+				if absInput == absOutput {
+					return fmt.Errorf("output file '%s' conflicts with input file", mergeOutput)
+				}
+			}
+
 			if err := api.MergeCreateFile(matches, mergeOutput, false, nil); err != nil {
 				return fmt.Errorf("merge failed: %w", err)
 			}

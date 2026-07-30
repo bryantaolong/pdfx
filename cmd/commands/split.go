@@ -23,6 +23,11 @@ func NewCmdSplit() *cobra.Command {
 				return fmt.Errorf("file '%s' does not exist", splitName)
 			}
 
+			// Validate split page number
+			if splitFrom < 1 {
+				return fmt.Errorf("--from must be >= 1, got %d", splitFrom)
+			}
+
 			dir := filepath.Dir(splitName)
 			stem := filepath.Base(splitName[:len(splitName)-len(filepath.Ext(splitName))])
 
