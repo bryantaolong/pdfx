@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/bryantaolong/pdfx/cmd/commands"
 	"github.com/spf13/cobra"
@@ -21,15 +20,9 @@ func Execute() error {
 
 func init() {
 	rootCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "Print the version of pdfx")
-	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
-		if showVersion {
-			fmt.Println(GetVersion())
-			os.Exit(0)
-		}
-		return nil
-	}
 	rootCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		if showVersion {
+			fmt.Println(GetVersion())
 			return nil
 		}
 		return cmd.Help()

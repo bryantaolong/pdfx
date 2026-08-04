@@ -19,8 +19,11 @@ func NewCmdSplit() *cobra.Command {
 		Short: "Split a PDF into two files at a specified page number",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			splitName = EnsurePDFExt(splitName)
-			if _, err := os.Stat(splitName); os.IsNotExist(err) {
-				return fmt.Errorf("file '%s' does not exist", splitName)
+			if _, err := os.Stat(splitName); err != nil {
+				if os.IsNotExist(err) {
+					return fmt.Errorf("file '%s' does not exist", splitName)
+				}
+				return fmt.Errorf("cannot access file '%s': %w", splitName, err)
 			}
 
 			// Validate split page number

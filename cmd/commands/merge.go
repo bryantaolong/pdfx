@@ -20,8 +20,11 @@ func NewCmdMerge() *cobra.Command {
 			if mergeDir == "" {
 				mergeDir = "."
 			}
-			if _, err := os.Stat(mergeDir); os.IsNotExist(err) {
-				return fmt.Errorf("directory '%s' does not exist", mergeDir)
+			if _, err := os.Stat(mergeDir); err != nil {
+				if os.IsNotExist(err) {
+					return fmt.Errorf("directory '%s' does not exist", mergeDir)
+				}
+				return fmt.Errorf("cannot access directory '%s': %w", mergeDir, err)
 			}
 
 			pattern := filepath.Join(mergeDir, "*.pdf")
@@ -55,14 +58,22 @@ func NewCmdMerge() *cobra.Command {
 			}
 
 			// Check if output file already exists
-			if _, err := os.Stat(mergeOutput); !os.IsNotExist(err) {
+			if _, err := os.Stat(mergeOutput); err == nil {
 				return fmt.Errorf("output file '%s' already exists", mergeOutput)
+			} else if !os.IsNotExist(err) {
+				return fmt.Errorf("cannot access output file '%s': %w", mergeOutput, err)
 			}
 
 			// Check if output conflicts with any input file
-			absOutput, _ := filepath.Abs(mergeOutput)
+			absOutput, err := filepath.Abs(mergeOutput)
+			if err != nil {
+				return fmt.Errorf("failed to resolve output path: %w", err)
+			}
 			for _, m := range matches {
-				absInput, _ := filepath.Abs(m)
+				absInput, err := filepath.Abs(m)
+				if err != nil {
+					return fmt.Errorf("failed to resolve input path '%s': %w", m, err)
+				}
 				if absInput == absOutput {
 					return fmt.Errorf("output file '%s' conflicts with input file", mergeOutput)
 				}
