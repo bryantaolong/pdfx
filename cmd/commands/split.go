@@ -26,9 +26,18 @@ func NewCmdSplit() *cobra.Command {
 				return fmt.Errorf("cannot access file '%s': %w", splitName, err)
 			}
 
-			// Validate split page number
-			if splitFrom < 1 {
-				return fmt.Errorf("--from must be >= 1, got %d", splitFrom)
+			// Validate split page number.
+			// A split at page 1 would produce an empty first file (pages 1..0),
+			// which pdfcpu silently writes as a 0-page PDF, so reject it.
+			if splitFrom < 2 {
+				return fmt.Errorf("--from must be >= 2 (a split at page 1 would produce an empty first file), got %d", splitFrom)
+			}
+
+			dir := filepath.Dir(splitName)
+			base := filepath.Base(splitName)
+			stem := base[:len(base)-len(filepath.Ext(base))]
+			if stem == "" {
+				return fmt.Errorf("invalid PDF file name: %s", splitName)
 			}
 
 			totalPages, err := api.PageCountFile(splitName)
@@ -39,8 +48,14 @@ func NewCmdSplit() *cobra.Command {
 				return fmt.Errorf("--from must be <= total pages (%d), got %d", totalPages, splitFrom)
 			}
 
-			dir := filepath.Dir(splitName)
-			stem := filepath.Base(splitName[:len(splitName)-len(filepath.Ext(splitName))])
+			// Snapshot existing files so only newly generated ones are reported
+			existing := map[string]bool{}
+			prev, err := filepath.Glob(filepath.Join(dir, stem+"_*.pdf"))
+			if err == nil {
+				for _, p := range prev {
+					existing[filepath.Base(p)] = true
+				}
+			}
 
 			// Split at the specified page number
 			if err := api.SplitByPageNrFile(splitName, dir, []int{splitFrom}, nil); err != nil {
@@ -50,16 +65,22 @@ func NewCmdSplit() *cobra.Command {
 			fmt.Println("Split complete!")
 			fmt.Printf("  Output directory: %s\n", dir)
 
-			// List generated files
+			// List newly generated files
 			pattern := filepath.Join(dir, stem+"_*.pdf")
 			matches, err := filepath.Glob(pattern)
 			if err != nil {
 				return fmt.Errorf("failed to list generated files: %w", err)
 			}
-			if len(matches) > 0 {
-				sort.Strings(matches)
+			var generated []string
+			for _, m := range matches {
+				if !existing[filepath.Base(m)] {
+					generated = append(generated, m)
+				}
+			}
+			if len(generated) > 0 {
+				sort.Strings(generated)
 				fmt.Println("  Generated files:")
-				for _, m := range matches {
+				for _, m := range generated {
 					fmt.Printf("    - %s\n", filepath.Base(m))
 				}
 			}

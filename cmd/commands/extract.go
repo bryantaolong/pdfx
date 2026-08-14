@@ -20,16 +20,42 @@ func NewCmdExtract() *cobra.Command {
 		Short: "Extract specified pages from a PDF and merge them into a new file",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			extractName = EnsurePDFExt(extractName)
-			if _, err := os.Stat(extractName); os.IsNotExist(err) {
-				return fmt.Errorf("file '%s' does not exist", extractName)
+			if _, err := os.Stat(extractName); err != nil {
+				if os.IsNotExist(err) {
+					return fmt.Errorf("file '%s' does not exist", extractName)
+				}
+				return fmt.Errorf("cannot access file '%s': %w", extractName, err)
 			}
 
 			if extractOutput == "" {
 				ext := filepath.Ext(extractName)
 				stem := extractName[:len(extractName)-len(ext)]
+				if stem == "" {
+					return fmt.Errorf("invalid PDF file name: %s", extractName)
+				}
 				extractOutput = stem + "_extracted.pdf"
 			}
 			extractOutput = EnsurePDFExt(extractOutput)
+
+			// Check if output file already exists
+			if _, err := os.Stat(extractOutput); err == nil {
+				return fmt.Errorf("output file '%s' already exists", extractOutput)
+			} else if !os.IsNotExist(err) {
+				return fmt.Errorf("cannot access output file '%s': %w", extractOutput, err)
+			}
+
+			// Check if output conflicts with the input file
+			absInput, err := filepath.Abs(extractName)
+			if err != nil {
+				return fmt.Errorf("failed to resolve input path: %w", err)
+			}
+			absOutput, err := filepath.Abs(extractOutput)
+			if err != nil {
+				return fmt.Errorf("failed to resolve output path: %w", err)
+			}
+			if absInput == absOutput {
+				return fmt.Errorf("output file '%s' conflicts with input file", extractOutput)
+			}
 
 			parts := strings.Split(extractPages, ",")
 			pages := make([]string, 0, len(parts))

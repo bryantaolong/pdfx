@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -87,14 +88,14 @@ func TestVersionFlag(t *testing.T) {
 
 	for _, args := range [][]string{{"-v"}, {"--version"}} {
 		t.Run(strings.Join(args, " "), func(t *testing.T) {
-			cmd := exec.Command("go", "run", filepath.Join(projectRoot, "main.go"))
-			cmd.Args = append(cmd.Args, args...)
-			cmd.Dir = projectRoot
-			out, err := cmd.CombinedOutput()
+			execCmd := exec.Command("go", "run", filepath.Join(projectRoot, "main.go"))
+			execCmd.Args = append(execCmd.Args, args...)
+			execCmd.Dir = projectRoot
+			out, err := execCmd.CombinedOutput()
 			if err != nil {
 				t.Fatalf("command failed: %v\n%s", err, out)
 			}
-			if !strings.Contains(string(out), "v0.1.2") {
+			if !strings.Contains(string(out), cmd.GetVersion()) {
 				t.Fatalf("expected version output, got: %s", out)
 			}
 		})
@@ -197,5 +198,86 @@ func TestExtractDuplicatePages(t *testing.T) {
 	}
 	if _, err := os.Stat("dup.pdf"); os.IsNotExist(err) {
 		t.Fatal("dup.pdf was not created")
+	}
+}
+
+func TestExtractOutputConflictsWithInput(t *testing.T) {
+	data, err := os.ReadFile("test_file.pdf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = runCLI("extract", "-n", "test_file.pdf", "-p", "1", "-o", "test_file.pdf")
+	if err == nil {
+		t.Fatal("expected error when output conflicts with input")
+	}
+	got, err := os.ReadFile("test_file.pdf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(data, got) {
+		t.Fatal("input file was modified")
+	}
+}
+
+func TestExtractOutputExists(t *testing.T) {
+	if err := runCLI("extract", "-n", "test_file.pdf", "-p", "1", "-o", "exists.pdf"); err != nil {
+		t.Fatalf("first extract failed: %v", err)
+	}
+	err := runCLI("extract", "-n", "test_file.pdf", "-p", "1", "-o", "exists.pdf")
+	if err == nil {
+		t.Fatal("expected error when output file already exists")
+	}
+}
+
+func TestSplitFromOne(t *testing.T) {
+	err := runCLI("split", "-n", "test_file.pdf", "-f", "1")
+	if err == nil {
+		t.Fatal("expected error for --from 1")
+	}
+	if _, err := os.Stat("test_file_1-0.pdf"); !os.IsNotExist(err) {
+		t.Fatal("empty first segment file should not exist")
+	}
+}
+
+func TestMergeSkipsInvalidPdf(t *testing.T) {
+	dir := "skipdir"
+	if err := os.Mkdir(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	src, err := os.ReadFile("a.pdf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "a.pdf"), src, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "bad.pdf"), []byte("this is not a pdf"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := runCLI("merge", "-d", dir, "-o", "skip_merged.pdf"); err != nil {
+		t.Fatalf("merge with invalid pdf should succeed: %v", err)
+	}
+	if _, err := os.Stat("skip_merged.pdf"); os.IsNotExist(err) {
+		t.Fatal("skip_merged.pdf was not created")
+	}
+}
+
+func TestMergeCaseInsensitiveExt(t *testing.T) {
+	dir := "casedir"
+	if err := os.Mkdir(dir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	src, err := os.ReadFile("b.pdf")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "UPPER.PDF"), src, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := runCLI("merge", "-d", dir, "-o", "case_merged.pdf"); err != nil {
+		t.Fatalf("merge failed: %v", err)
+	}
+	if _, err := os.Stat("case_merged.pdf"); os.IsNotExist(err) {
+		t.Fatal("case_merged.pdf was not created")
 	}
 }
