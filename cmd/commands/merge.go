@@ -17,20 +17,27 @@ func NewCmdMerge() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "merge",
 		Short: "Merge all PDF files in a directory into one file",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			if mergeDir == "" {
-				mergeDir = "."
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			// 将包级 flag 值拷入局部变量，并重置包级变量，
+			// 避免 cobra 在后续 Execute() 中复用上次残留值。
+			dir := mergeDir
+			output := mergeOutput
+			mergeDir = ""
+			mergeOutput = ""
+
+			if dir == "" {
+				dir = "."
 			}
-			if _, err := os.Stat(mergeDir); err != nil {
+			if _, err := os.Stat(dir); err != nil {
 				if os.IsNotExist(err) {
-					return fmt.Errorf("directory '%s' does not exist", mergeDir)
+					return fmt.Errorf("directory '%s' does not exist", dir)
 				}
-				return fmt.Errorf("cannot access directory '%s': %w", mergeDir, err)
+				return fmt.Errorf("cannot access directory '%s': %w", dir, err)
 			}
 
 			// Match all entries and filter by ".pdf" case-insensitively,
 			// so files like "DOC.PDF" are found on any platform.
-			entries, err := filepath.Glob(filepath.Join(mergeDir, "*"))
+			entries, err := filepath.Glob(filepath.Join(dir, "*"))
 			if err != nil {
 				return err
 			}
@@ -42,17 +49,17 @@ func NewCmdMerge() *cobra.Command {
 			}
 
 			if len(matches) == 0 {
-				fmt.Printf("Warning: no PDF files found in '%s'.\n", mergeDir)
+				fmt.Printf("Warning: no PDF files found in '%s'.\n", dir)
 				return nil
 			}
 
-			if mergeOutput == "" {
-				mergeOutput = "merged.pdf"
+			if output == "" {
+				output = "merged.pdf"
 			}
-			mergeOutput = EnsurePDFExt(mergeOutput)
+			output = EnsurePDFExt(output)
 
 			// Ensure output directory exists
-			outDir := filepath.Dir(mergeOutput)
+			outDir := filepath.Dir(output)
 			if outDir != "." && outDir != "" {
 				if err := os.MkdirAll(outDir, 0755); err != nil {
 					return fmt.Errorf("failed to create output directory: %w", err)
@@ -60,14 +67,14 @@ func NewCmdMerge() *cobra.Command {
 			}
 
 			// Check if output file already exists
-			if _, err := os.Stat(mergeOutput); err == nil {
-				return fmt.Errorf("output file '%s' already exists", mergeOutput)
+			if _, err := os.Stat(output); err == nil {
+				return fmt.Errorf("output file '%s' already exists", output)
 			} else if !os.IsNotExist(err) {
-				return fmt.Errorf("cannot access output file '%s': %w", mergeOutput, err)
+				return fmt.Errorf("cannot access output file '%s': %w", output, err)
 			}
 
 			// Resolve output path once for input filtering
-			absOutput, err := filepath.Abs(mergeOutput)
+			absOutput, err := filepath.Abs(output)
 			if err != nil {
 				return fmt.Errorf("failed to resolve output path: %w", err)
 			}
@@ -96,7 +103,7 @@ func NewCmdMerge() *cobra.Command {
 			}
 
 			if len(inputs) == 0 {
-				return fmt.Errorf("no valid PDF files to merge in '%s'", mergeDir)
+				return fmt.Errorf("no valid PDF files to merge in '%s'", dir)
 			}
 
 			fmt.Printf("Found %d PDF files:\n", len(inputs))
@@ -107,11 +114,11 @@ func NewCmdMerge() *cobra.Command {
 				fmt.Printf("Warning: skipped %d invalid file(s).\n", skipped)
 			}
 
-			if err := api.MergeCreateFile(inputs, mergeOutput, false, nil); err != nil {
+			if err := api.MergeCreateFile(inputs, output, false, nil); err != nil {
 				return fmt.Errorf("merge failed: %w", err)
 			}
 
-			fmt.Printf("\nMerge complete! Saved to: %s\n", mergeOutput)
+			fmt.Printf("\nMerge complete! Saved to: %s\n", output)
 			return nil
 		},
 	}
