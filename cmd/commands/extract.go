@@ -13,24 +13,19 @@ import (
 )
 
 func NewCmdExtract() *cobra.Command {
-	var extractName, extractPages, extractOutput string
+	var extractPages, extractOutput string
 
 	cmd := &cobra.Command{
-		Use:   "extract",
+		Use:   "extract <file.pdf>",
 		Short: "Extract specified pages from a PDF and merge them into a new file",
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			// 将包级 flag 值拷入局部变量，并重置包级变量，
-			// 避免 cobra 在后续 Execute() 中复用上次残留值。
-			name := extractName
+		Args:  cobra.ExactArgs(1),
+		RunE: func(_ *cobra.Command, args []string) error {
+			name := args[0]
 			pages := extractPages
 			output := extractOutput
-			extractName = ""
 			extractPages = ""
 			extractOutput = ""
 
-			if name == "" {
-				return fmt.Errorf("required flag \"name\" not set")
-			}
 			if pages == "" {
 				return fmt.Errorf("required flag \"pages\" not set")
 			}
@@ -53,14 +48,7 @@ func NewCmdExtract() *cobra.Command {
 			}
 			output = EnsurePDFExt(output)
 
-			// Check if output file already exists
-			if _, err := os.Stat(output); err == nil {
-				return fmt.Errorf("output file '%s' already exists", output)
-			} else if !os.IsNotExist(err) {
-				return fmt.Errorf("cannot access output file '%s': %w", output, err)
-			}
-
-			// Check if output conflicts with the input file
+			// Check if output conflicts with the input file before auto-incrementing
 			absInput, err := filepath.Abs(name)
 			if err != nil {
 				return fmt.Errorf("failed to resolve input path: %w", err)
@@ -71,6 +59,30 @@ func NewCmdExtract() *cobra.Command {
 			}
 			if absInput == absOutput {
 				return fmt.Errorf("output file '%s' conflicts with input file", output)
+			}
+
+			// Ensure output directory exists
+			outDir := filepath.Dir(output)
+			if outDir != "." && outDir != "" {
+				if err := os.MkdirAll(outDir, 0755); err != nil {
+					return fmt.Errorf("failed to create output directory: %w", err)
+				}
+			}
+
+			// Check if output file already exists and auto-increment suffix if needed
+			baseOutput := output
+			counter := 1
+			for {
+				if _, err := os.Stat(output); err != nil {
+					if os.IsNotExist(err) {
+						break
+					}
+					return fmt.Errorf("cannot access output file '%s': %w", output, err)
+				}
+				ext := filepath.Ext(baseOutput)
+				stem := baseOutput[:len(baseOutput)-len(ext)]
+				output = fmt.Sprintf("%s_%d%s", stem, counter, ext)
+				counter++
 			}
 
 			parts := strings.Split(pages, ",")
@@ -92,14 +104,6 @@ func NewCmdExtract() *cobra.Command {
 
 			if len(pagesSlice) == 0 {
 				return fmt.Errorf("no valid pages specified")
-			}
-
-			// Ensure output directory exists
-			outDir := filepath.Dir(output)
-			if outDir != "." && outDir != "" {
-				if err := os.MkdirAll(outDir, 0755); err != nil {
-					return fmt.Errorf("failed to create output directory: %w", err)
-				}
 			}
 
 			// Validate page range
@@ -145,10 +149,8 @@ func NewCmdExtract() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&extractName, "name", "n", "", "Input PDF file path (required)")
 	cmd.Flags().StringVarP(&extractPages, "pages", "p", "", "Comma-separated page numbers, e.g. 1,2,3,4 (required)")
 	cmd.Flags().StringVarP(&extractOutput, "output", "o", "", "Output file path (default: <input>_extracted.pdf)")
-	_ = cmd.MarkFlagRequired("name")
 	_ = cmd.MarkFlagRequired("pages")
 	return cmd
 }

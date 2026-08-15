@@ -66,11 +66,21 @@ func NewCmdMerge() *cobra.Command {
 				}
 			}
 
-			// Check if output file already exists
-			if _, err := os.Stat(output); err == nil {
-				return fmt.Errorf("output file '%s' already exists", output)
-			} else if !os.IsNotExist(err) {
-				return fmt.Errorf("cannot access output file '%s': %w", output, err)
+			// Check if output file already exists and auto-increment suffix if needed
+			baseOutput := output
+			counter := 1
+			for {
+				if _, err := os.Stat(output); err != nil {
+					if os.IsNotExist(err) {
+						break
+					}
+					return fmt.Errorf("cannot access output file '%s': %w", output, err)
+				}
+				// File exists, generate new name with suffix before extension
+				ext := filepath.Ext(baseOutput)
+				stem := baseOutput[:len(baseOutput)-len(ext)]
+				output = fmt.Sprintf("%s_%d%s", stem, counter, ext)
+				counter++
 			}
 
 			// Resolve output path once for input filtering

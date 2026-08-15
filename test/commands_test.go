@@ -111,8 +111,34 @@ func TestMerge(t *testing.T) {
 	}
 }
 
+func TestMergeAutoIncrementWhenExists(t *testing.T) {
+	// First merge creates merged.pdf
+	if err := runCLI("merge", "-o", "automerge.pdf"); err != nil {
+		t.Fatalf("first merge failed: %v", err)
+	}
+	if _, err := os.Stat("automerge.pdf"); os.IsNotExist(err) {
+		t.Fatal("automerge.pdf was not created")
+	}
+
+	// Second merge with same output name should auto-increment to automerge_1.pdf
+	if err := runCLI("merge", "-o", "automerge.pdf"); err != nil {
+		t.Fatalf("second merge failed: %v", err)
+	}
+	if _, err := os.Stat("automerge_1.pdf"); os.IsNotExist(err) {
+		t.Fatal("automerge_1.pdf was not created")
+	}
+
+	// Third merge should auto-increment to automerge_2.pdf
+	if err := runCLI("merge", "-o", "automerge.pdf"); err != nil {
+		t.Fatalf("third merge failed: %v", err)
+	}
+	if _, err := os.Stat("automerge_2.pdf"); os.IsNotExist(err) {
+		t.Fatal("automerge_2.pdf was not created")
+	}
+}
+
 func TestSplit(t *testing.T) {
-	if err := runCLI("split", "-n", "test_file.pdf", "-f", "2"); err != nil {
+	if err := runCLI("split", "test_file.pdf", "-f", "2"); err != nil {
 		t.Fatalf("split failed: %v", err)
 	}
 	// pdfcpu naming convention for 2-page file: test_file_1.pdf, test_file_2.pdf
@@ -125,7 +151,7 @@ func TestSplit(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
-	if err := runCLI("extract", "-n", "test_file.pdf", "-p", "1", "-o", "extracted.pdf"); err != nil {
+	if err := runCLI("extract", "test_file.pdf", "-p", "1", "-o", "extracted.pdf"); err != nil {
 		t.Fatalf("extract failed: %v", err)
 	}
 	if _, err := os.Stat("extracted.pdf"); os.IsNotExist(err) {
@@ -141,7 +167,7 @@ func TestMergeMissingDir(t *testing.T) {
 }
 
 func TestSplitMissingFile(t *testing.T) {
-	err := runCLI("split", "-n", "nonexistent.pdf", "-f", "1")
+	err := runCLI("split", "nonexistent.pdf", "-f", "1")
 	if err == nil {
 		t.Fatal("expected error for missing file")
 	}
@@ -149,7 +175,7 @@ func TestSplitMissingFile(t *testing.T) {
 
 func TestSplitOutOfRangePage(t *testing.T) {
 	// test_file.pdf has 2 pages; page 3 is out of range
-	err := runCLI("split", "-n", "test_file.pdf", "-f", "3")
+	err := runCLI("split", "test_file.pdf", "-f", "3")
 	if err == nil {
 		t.Fatal("expected error for out-of-range page")
 	}
@@ -158,7 +184,7 @@ func TestSplitOutOfRangePage(t *testing.T) {
 func TestSplitInvalidPage(t *testing.T) {
 	for _, from := range []int{0, -1} {
 		t.Run(fmt.Sprintf("from=%d", from), func(t *testing.T) {
-			err := runCLI("split", "-n", "test_file.pdf", "-f", strconv.Itoa(from))
+			err := runCLI("split", "test_file.pdf", "-f", strconv.Itoa(from))
 			if err == nil {
 				t.Fatal("expected error for invalid page number")
 			}
@@ -167,7 +193,7 @@ func TestSplitInvalidPage(t *testing.T) {
 }
 
 func TestExtractMissingFile(t *testing.T) {
-	err := runCLI("extract", "-n", "nonexistent.pdf", "-p", "1")
+	err := runCLI("extract", "nonexistent.pdf", "-p", "1")
 	if err == nil {
 		t.Fatal("expected error for missing file")
 	}
@@ -176,7 +202,7 @@ func TestExtractMissingFile(t *testing.T) {
 func TestExtractInvalidPage(t *testing.T) {
 	for _, p := range []string{"abc", "0", "-1"} {
 		t.Run(p, func(t *testing.T) {
-			err := runCLI("extract", "-n", "test_file.pdf", "-p", p)
+			err := runCLI("extract", "test_file.pdf", "-p", p)
 			if err == nil {
 				t.Fatal("expected error for invalid page")
 			}
@@ -186,14 +212,14 @@ func TestExtractInvalidPage(t *testing.T) {
 
 func TestExtractOutOfRangePage(t *testing.T) {
 	// test_file.pdf has 2 pages; page 3 is out of range
-	err := runCLI("extract", "-n", "test_file.pdf", "-p", "3")
+	err := runCLI("extract", "test_file.pdf", "-p", "3")
 	if err == nil {
 		t.Fatal("expected error for out-of-range page")
 	}
 }
 
 func TestExtractDuplicatePages(t *testing.T) {
-	if err := runCLI("extract", "-n", "test_file.pdf", "-p", "1,1,2,2", "-o", "dup.pdf"); err != nil {
+	if err := runCLI("extract", "test_file.pdf", "-p", "1,1,2,2", "-o", "dup.pdf"); err != nil {
 		t.Fatalf("extract with duplicate pages failed: %v", err)
 	}
 	if _, err := os.Stat("dup.pdf"); os.IsNotExist(err) {
@@ -206,7 +232,7 @@ func TestExtractOutputConflictsWithInput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = runCLI("extract", "-n", "test_file.pdf", "-p", "1", "-o", "test_file.pdf")
+	err = runCLI("extract", "test_file.pdf", "-p", "1", "-o", "test_file.pdf")
 	if err == nil {
 		t.Fatal("expected error when output conflicts with input")
 	}
@@ -220,17 +246,32 @@ func TestExtractOutputConflictsWithInput(t *testing.T) {
 }
 
 func TestExtractOutputExists(t *testing.T) {
-	if err := runCLI("extract", "-n", "test_file.pdf", "-p", "1", "-o", "exists.pdf"); err != nil {
+	if err := runCLI("extract", "test_file.pdf", "-p", "1", "-o", "exists.pdf"); err != nil {
 		t.Fatalf("first extract failed: %v", err)
 	}
-	err := runCLI("extract", "-n", "test_file.pdf", "-p", "1", "-o", "exists.pdf")
-	if err == nil {
-		t.Fatal("expected error when output file already exists")
+	if _, err := os.Stat("exists.pdf"); os.IsNotExist(err) {
+		t.Fatal("exists.pdf was not created")
+	}
+
+	// Second extract with same output should auto-increment to exists_1.pdf
+	if err := runCLI("extract", "test_file.pdf", "-p", "1", "-o", "exists.pdf"); err != nil {
+		t.Fatalf("second extract failed: %v", err)
+	}
+	if _, err := os.Stat("exists_1.pdf"); os.IsNotExist(err) {
+		t.Fatal("exists_1.pdf was not created")
+	}
+
+	// Third extract should auto-increment to exists_2.pdf
+	if err := runCLI("extract", "test_file.pdf", "-p", "1", "-o", "exists.pdf"); err != nil {
+		t.Fatalf("third extract failed: %v", err)
+	}
+	if _, err := os.Stat("exists_2.pdf"); os.IsNotExist(err) {
+		t.Fatal("exists_2.pdf was not created")
 	}
 }
 
 func TestSplitFromOne(t *testing.T) {
-	err := runCLI("split", "-n", "test_file.pdf", "-f", "1")
+	err := runCLI("split", "test_file.pdf", "-f", "1")
 	if err == nil {
 		t.Fatal("expected error for --from 1")
 	}

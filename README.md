@@ -62,7 +62,6 @@ pdfx --help
 pdfx merge --help
 pdfx split --help
 pdfx extract --help
-pdfx version --help
 ```
 
 ### Merge PDFs
@@ -74,7 +73,7 @@ Merge all PDF files in a directory into one file:
 pdfx merge --output merged.pdf
 
 # Merge PDFs from a specific directory
-pdfx merge -d /path/to/pdfs -o merged.pdf
+pdfx merge -d ./path/to/pdfs -o merged.pdf
 ```
 
 ### Split PDF
@@ -82,7 +81,7 @@ pdfx merge -d /path/to/pdfs -o merged.pdf
 Split a PDF into two files at a specified page number:
 
 ```bash
-pdfx split --name input.pdf --from 10
+pdfx split input.pdf --from 10
 ```
 
 This splits `input.pdf` into:
@@ -94,7 +93,7 @@ This splits `input.pdf` into:
 Extract specified pages from a PDF and merge them into a new file:
 
 ```bash
-pdfx extract --name input.pdf --pages 1,3,5 --output extracted.pdf
+pdfx extract input.pdf --pages 1,3,5 --output extracted.pdf
 ```
 
 ---
@@ -102,17 +101,17 @@ pdfx extract --name input.pdf --pages 1,3,5 --output extracted.pdf
 ## Example
 
 ```bash
+# Check version
+pdfx -v
+
 # Merge all PDFs in a directory
 pdfx merge -d ./docs -o combined.pdf
 
 # Split a PDF at page 15
-pdfx split -n book.pdf -f 15
+pdfx split book.pdf -f 15
 
 # Extract pages 1, 2, and 3
-pdfx extract -n book.pdf -p 1,2,3 -o chapters.pdf
-
-# Check version
-pdfx -v
+pdfx extract book.pdf -p 1,2,3 -o chapters.pdf
 ```
 
 ---
