@@ -4,13 +4,14 @@
   </a>
 </div>
 
-一个 PDF 命令行工具，用于合并、拆分和提取 PDF 页面。
+一个 PDF 命令行工具，用于合并、拆分、提取和移除 PDF 页面。
 
 ## 功能
 
 - **merge**：将目录中的所有 PDF 文件合并为一个文件
 - **split**：在指定页码处将 PDF 拆分为两个文件
 - **extract**：提取 PDF 的指定页面并合并为一个新文件
+- **remove**：移除 PDF 的指定页面，保留剩余页面
 - **version**：查看当前版本号
 
 ## 构建
@@ -31,6 +32,9 @@ go build -o pdfx.exe .
 
 # 提取指定页面
 ./pdfx.exe extract 输入文件 -p 1,2,3
+
+# 移除指定页面
+./pdfx.exe remove 输入文件 -p 1,2,3
 
 # 查看版本
 ./pdfx.exe version
@@ -117,6 +121,30 @@ go build -o pdfx.exe .
 ./pdfx.exe extract 文档.pdf -p 1,2,3 -o 摘要.pdf
 ```
 
+### remove
+
+移除 PDF 的指定页面，保留剩余页面。
+
+```bash
+./pdfx.exe remove [flags]
+```
+
+| 参数 | 说明 | 是否必须 | 默认值 |
+|------|------|----------|--------|
+| `输入文件` | 输入 PDF 文件路径（位置参数） | 是 | - |
+| `--pages, -p` | 要移除的页码，逗号分隔，如 1,2,3,4 | 是 | - |
+| `--output, -o` | 输出文件路径 | 否 | `<输入名>_removed.pdf` |
+
+**示例：**
+
+```bash
+# 移除第 1、2、3 页
+./pdfx.exe remove 文档.pdf -p 1,2,3
+
+# 指定输出文件名
+./pdfx.exe remove 文档.pdf -p 1,2,3 -o 剩余页.pdf
+```
+
 ### version
 
 查看当前版本号。
@@ -142,7 +170,8 @@ pdfx/
 │     ├─ util.go
 │     ├─ merge.go
 │     ├─ split.go
-│     └─ extract.go
+│     ├─ extract.go
+│     └─ remove.go
 ├─ test/          # 模块测试
 ├─ logo/          # Logo 资源
 ├─ main.go
@@ -154,3 +183,4 @@ pdfx/
 - 输入文件路径无需手动添加 `.pdf` 后缀，工具会自动补全
 - 输出文件路径也无需手动添加 `.pdf` 后缀，工具会自动补全
 - `split` 命令的 `-f` 参数表示第二份文件的**起始页码**，即第一份文件包含 `1` 到 `from-1` 页
+- `remove` 命令会移除指定页码，保留其余页面，不能移除所有页面

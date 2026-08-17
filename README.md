@@ -4,7 +4,7 @@
   </a>
 </div>
 
-**PDFX** empowers you to merge, split and extract PDF files right in your terminal.
+**PDFX** empowers you to merge, split, extract and remove PDF pages right in your terminal.
 
 ---
 
@@ -13,6 +13,7 @@
 * Merge all PDF files in a directory into one file
 * Split a PDF into two files at a specified page number
 * Extract specified pages from a PDF and merge them into a new file
+* Remove specified pages from a PDF and save the result to a new file
 * Check version via `pdfx version` or `pdfx -v`
 * Color-coded output for easy operation feedback
 
@@ -62,6 +63,7 @@ pdfx --help
 pdfx merge --help
 pdfx split --help
 pdfx extract --help
+pdfx remove --help
 ```
 
 ### Merge PDFs
@@ -96,6 +98,14 @@ Extract specified pages from a PDF and merge them into a new file:
 pdfx extract input.pdf --pages 1,3,5 --output extracted.pdf
 ```
 
+### Remove PDF Pages
+
+Remove specified pages from a PDF and save the result to a new file:
+
+```bash
+pdfx remove input.pdf --pages 1,3,5 --output removed.pdf
+```
+
 ---
 
 ## Example
@@ -112,6 +122,9 @@ pdfx split book.pdf -f 15
 
 # Extract pages 1, 2, and 3
 pdfx extract book.pdf -p 1,2,3 -o chapters.pdf
+
+# Remove pages 1, 2, and 3
+pdfx remove book.pdf -p 1,2,3 -o remaining.pdf
 ```
 
 ---
@@ -127,7 +140,8 @@ pdfx/
 │     ├─ util.go
 │     ├─ merge.go
 │     ├─ split.go
-│     └─ extract.go
+│     ├─ extract.go
+│     └─ remove.go
 ├─ test/          # Integration tests
 ├─ logo/          # Logo assets and icon workflow
 ├─ main.go
@@ -141,6 +155,8 @@ pdfx/
 * Page numbers are 1-based in all commands
 * The `--from` flag in `split` indicates the start page of the second file
 * The `--pages` flag in `extract` accepts comma-separated page numbers
+* The `--pages` flag in `remove` accepts comma-separated page numbers to remove
+* Removing all pages is not allowed and will result in an error
 
 ---
 

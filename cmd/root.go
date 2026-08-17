@@ -31,5 +31,6 @@ func init() {
 	rootCmd.AddCommand(commands.NewCmdMerge())
 	rootCmd.AddCommand(commands.NewCmdSplit())
 	rootCmd.AddCommand(commands.NewCmdExtract())
+	rootCmd.AddCommand(commands.NewCmdRemove())
 	rootCmd.AddCommand(NewCmdVersion())
 }

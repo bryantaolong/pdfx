@@ -150,6 +150,15 @@ func TestSplit(t *testing.T) {
 	}
 }
 
+func TestRemove(t *testing.T) {
+	if err := runCLI("remove", "test_file.pdf", "-p", "1", "-o", "removed.pdf"); err != nil {
+		t.Fatalf("remove failed: %v", err)
+	}
+	if _, err := os.Stat("removed.pdf"); os.IsNotExist(err) {
+		t.Fatal("removed.pdf was not created")
+	}
+}
+
 func TestExtract(t *testing.T) {
 	if err := runCLI("extract", "test_file.pdf", "-p", "1", "-o", "extracted.pdf"); err != nil {
 		t.Fatalf("extract failed: %v", err)
